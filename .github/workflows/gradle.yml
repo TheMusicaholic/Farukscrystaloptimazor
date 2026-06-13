@@ -2,9 +2,14 @@ name: Build & Upload
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - "main"
+      - "claude/**"
+    tags:
+      - "v*"
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
@@ -12,14 +17,20 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK 21
+
+      # The build targets a Java 25 toolchain (see build.gradle.kts), while
+      # Gradle itself runs on JDK 21. Installing both keeps the runner from
+      # having to download a toolchain on every run.
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
           distribution: 'temurin'
+          java-version: |
+            25
+            21
 
       - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v3
+        uses: gradle/actions/setup-gradle@v4
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
