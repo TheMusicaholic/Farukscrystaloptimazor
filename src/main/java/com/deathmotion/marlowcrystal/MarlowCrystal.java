@@ -52,13 +52,13 @@ public class MarlowCrystal implements ClientModInitializer {
     public void onInitializeClient() {
         versionPacket = VersionUtil.createVersionPacket();
 
-        PayloadTypeRegistry.clientboundConfiguration().register(OptOutPacket.TYPE, OptOutPacket.STREAM_CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(OptOutPacket.TYPE, OptOutPacket.STREAM_CODEC);
-        PayloadTypeRegistry.clientboundPlay().register(ChallengePacket.TYPE, ChallengePacket.STREAM_CODEC);
+        PayloadTypeRegistry.configurationS2C().register(OptOutPacket.TYPE, OptOutPacket.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(OptOutPacket.TYPE, OptOutPacket.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(ChallengePacket.TYPE, ChallengePacket.STREAM_CODEC);
 
-        PayloadTypeRegistry.serverboundPlay().register(OptOutAckPacket.TYPE, OptOutAckPacket.STREAM_CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(VersionPacket.TYPE, VersionPacket.STREAM_CODEC);
-        PayloadTypeRegistry.serverboundPlay().register(ChallengeResponsePacket.TYPE, ChallengeResponsePacket.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(OptOutAckPacket.TYPE, OptOutAckPacket.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(VersionPacket.TYPE, VersionPacket.STREAM_CODEC);
+        PayloadTypeRegistry.playC2S().register(ChallengeResponsePacket.TYPE, ChallengeResponsePacket.STREAM_CODEC);
 
         ClientPlayConnectionEvents.JOIN.register(new ConnectEventListener());
         ClientPlayConnectionEvents.DISCONNECT.register(new DisconnectEventListener());
