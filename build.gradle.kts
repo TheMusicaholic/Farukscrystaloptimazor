@@ -7,7 +7,11 @@ version = "1.1.0"
 group = "com.deathmotion.marlowcrystal"
 
 base {
-    archivesName.set("${project.name}-${libs.versions.minecraft.get()}")
+    // Use a filesystem-safe slug for the artifact name. project.name is the
+    // human-readable "Marlow's Crystal Optimizer", whose spaces and apostrophe
+    // produce a jar/Maven artifactId that publishing tools (mc-publish,
+    // Modrinth/CurseForge) fail to resolve ("Unable to infer project type").
+    archivesName.set("marlows-crystal-optimizer-${libs.versions.minecraft.get()}")
 }
 
 dependencies {
