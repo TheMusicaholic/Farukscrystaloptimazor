@@ -7,13 +7,9 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ServerboundAttackPacket;
-import net.minecraft.world.effect.MobEffectInstance;
-import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.gameevent.GameEvent;
 import net.minecraft.world.phys.HitResult;
 import org.spongepowered.asm.mixin.Mixin;
@@ -56,7 +52,7 @@ public class ClientConnectionMixin {
             return;
         }
 
-        if (canDestroyCrystal(player)) {
+        if (canDestroyCrystal(player, crystal)) {
             destroyCrystal(crystal);
             retargetCrosshair(mc, crystal);
         }
@@ -75,33 +71,22 @@ public class ClientConnectionMixin {
     }
 
     @Unique
-    private boolean canDestroyCrystal(LocalPlayer player) {
-        double damage = player.getAttributeBaseValue(Attributes.ATTACK_DAMAGE);
-        damage += getWeaponDamage(player.getMainHandItem());
-
-        MobEffectInstance strength = player.getEffect(MobEffects.STRENGTH);
-        if (strength != null) {
-            damage += 3.0D * (strength.getAmplifier() + 1);
+    private boolean canDestroyCrystal(LocalPlayer player, EndCrystal crystal) {
+        // Only mirror the server when we are certain the attack would land. A
+        // crystal that is already gone or flagged invulnerable will not be
+        // removed server-side, and a spectator deals no damage at all. Removing
+        // it locally in those cases would desync and the crystal would "ghost"
+        // back, so we leave it untouched.
+        if (crystal.isRemoved() || crystal.isInvulnerable() || player.isSpectator()) {
+            return false;
         }
 
-        MobEffectInstance weakness = player.getEffect(MobEffects.WEAKNESS);
-        if (weakness != null) {
-            damage -= 4.0D * (weakness.getAmplifier() + 1);
-        }
-
-        return damage > 0.0D;
-    }
-
-    @Unique
-    private double getWeaponDamage(ItemStack item) {
-        if (item.isEmpty()) return 0.0D;
-        final double[] sum = {0.0D};
-        item.forEachModifier(EquipmentSlot.MAINHAND, (attribute, modifier) -> {
-            if (Attributes.ATTACK_DAMAGE.equals(attribute)) {
-                sum[0] += modifier.amount();
-            }
-        });
-        return sum[0];
+        // This is the exact value Player#attack uses to decide whether a hit
+        // deals damage. getAttributeValue already folds in the held weapon and
+        // the Strength/Weakness effects through the attribute system, so it
+        // stays correct as gear and effects change without re-deriving the math
+        // by hand. End crystals are destroyed by any positive attack damage.
+        return player.getAttributeValue(Attributes.ATTACK_DAMAGE) > 0.0D;
     }
 
     @Unique
