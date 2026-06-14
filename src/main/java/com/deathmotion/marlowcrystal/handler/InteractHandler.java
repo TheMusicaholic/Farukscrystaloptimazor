@@ -67,9 +67,19 @@ public class InteractHandler implements ServerboundInteractPacket.Handler {
             return;
         }
 
-        HitResult retraced = player.pick(player.blockInteractionRange(), 1.0F, false);
-        client.crosshairPickEntity = null;
+        // The crystal is already removed, so re-run vanilla's crosshair pick the
+        // same way GameRenderer#pick does. Unlike a block-only retrace this also
+        // considers entities, so a crystal stacked or queued directly behind the
+        // one we just broke becomes the new target and can be destroyed on the
+        // same input instead of waiting a frame for the next pick. With nothing in
+        // the way it still falls back to the block behind, so placing the next
+        // crystal is unchanged. This only moves the crosshair; the follow-up
+        // attack is re-validated through canDestroyCrystal, so nothing is removed
+        // speculatively.
+        Entity camera = client.getCameraEntity();
+        HitResult retraced = player.raycastHitResult(1.0F, camera != null ? camera : player);
         client.hitResult = retraced;
+        client.crosshairPickEntity = retraced instanceof EntityHitResult hit ? hit.getEntity() : null;
     }
 
     private boolean canDestroyCrystal(LocalPlayer player, EndCrystal crystal) {
